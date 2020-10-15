@@ -1,4 +1,5 @@
 const bre = require("@nomiclabs/buidler");
+const { utils } = require("ethers");
 
 const {
     isMainnet,
@@ -43,15 +44,29 @@ const forkDebugDeploy = async ({ getNamedAccounts, deployments }) => {
   // On mainnet, the governor is the Timelock contract.
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
 
-  const governorAddr = cMinuteTimelock.address;
+  //const governorAddr = cMinuteTimelock.address;
+
+  // On mainnet the guardian is the multi-sig
+  const guardianAddr = "0xe011fA2a6Df98c69383457d87a056Ed0103aA352"
 
   // those 2 accounts should be unlocked
-  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sGuardian = ethers.provider.getSigner(guardianAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
+
+  await sDeployer.sendTransaction({
+    to: guardianAddr,
+    value: utils.parseEther("1"),
+  });
 
   //
   // Deploy a new Curve USDT Strategy
+  // Use ethers.js to deploy directly since deploying usin
   //
+  const strategyFactory = await ethers.getContractFactory("ThreePoolStrategy");
+  const dCurveUSDTStrategy = await strategyFactory.deploy();
+  await dCurveUSDTStrategy.deployed();
+
+  /*
   const dCurveUSDTStrategy = await deploy("CurveUSDTStrategy", {
     from: deployerAddr,
     contract: "ThreePoolStrategy",
@@ -61,6 +76,7 @@ const forkDebugDeploy = async ({ getNamedAccounts, deployments }) => {
     dCurveUSDTStrategy.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
+   */
   log("Deployed CurveUSDTStrategy", dCurveUSDTStrategy);
 
   // Upgrade USDT Strategy by issuing and executing a governance proposal.
@@ -90,7 +106,7 @@ const forkDebugDeploy = async ({ getNamedAccounts, deployments }) => {
 
   console.log("Queueing proposal...");
   await governorContract
-    .connect(sGovernor)
+    .connect(sGuardian)
     .queue(proposalId, await getTxOpts());
   console.log("Waiting for TimeLock. Sleeping for 61 seconds...");
   await sleep(61000);
