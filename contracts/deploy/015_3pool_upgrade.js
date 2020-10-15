@@ -67,6 +67,25 @@ const upgradeThreePool = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Upgraded proxy to use new CurveUSDTStrategy strategy");
 
+  const dCompoundStrategy = await deploy("CompoundStrategy", {
+    from: deployerAddr,
+    ...(await getTxOpts()),
+  });
+  await ethers.provider.waitForTransaction(
+    dCompoundStrategy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+
+  const dCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+
+  transaction = await dCompoundStrategyProxy
+    .connect(sGovernor)
+    .upgradeTo(dCompoundStrategy.address, await getTxOpts());
+
+  log("Upgraded Compound strategy", dCompoundStrategy);
+
   console.log(
     "015_3pool_upgrade deploy done. Total gas used for deploys:",
     totalDeployGasUsed

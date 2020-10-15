@@ -43,7 +43,12 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
 
         ICERC20 cToken = _getCTokenFor(_asset);
-        require(cToken.mint(_amount) == 0, "cToken mint failed");
+
+        require(IERC20(_asset).balanceOf(address(this)) >= _amount, "We don't have enough for deposit");
+        require(cToken.underlying() == _asset, "Asset does not match underlying");
+
+        
+        //require(cToken.mint(_amount) == 0, "cToken mint failed");
 
         amountDeposited = _amount;
 
