@@ -103,7 +103,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             .scaleBy(int8(18 - assetDecimals))
             .mulTruncate(9e17);
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, minLPTokenAmount);
+        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
