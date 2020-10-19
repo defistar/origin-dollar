@@ -7,6 +7,7 @@ usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
 usePlugin("buidler-contract-sizer");
+usePlugin("@nomiclabs/buidler-web3");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
@@ -65,6 +66,25 @@ task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
     i++;
   }
 });
+
+task("balance", "Prints an account's balance")
+  .addParam("account", "The account's address")
+  .setAction(async taskArgs => {
+    const account = web3.utils.toChecksumAddress(taskArgs.account);
+    const balance = await web3.eth.getBalance(account);
+
+    console.log(web3.utils.fromWei(balance, "ether"), "ETH");
+  });
+
+  task("daiBalance", "Prints an account's balance")
+  .addParam("account", "The account's address")
+  .setAction(async (taskArgs, bre) => {
+    const account = web3.utils.toChecksumAddress(taskArgs.account);
+    const daiFactory = await bre.ethers.getContractFactory("MockDAI");
+    const dai =  await daiFactory.attach("0x307a6343A4ecd5dF8F113fb7f1A78D792F81f91C");
+    const balance = await dai.balanceOf(account);
+    console.log(`dai balance of Account : ${account} is : ${balance}`);
+  });  
 
 // Convert mnemonic into private keys for buidlerevm network config
 module.exports = {
